@@ -113,7 +113,7 @@ export function Game() {
     if (!started) {
       return (
         <button 
-          className='bg-blue-400 text-xl rounded-sm px-2 text-xl'
+          className='bg-blue-400 text-2xl text-white rounded-sm px-3 py-1 text-xl cursor-pointer hover:scale-105'
           onClick={startGame}
         >
           Start
@@ -169,9 +169,9 @@ export function Game() {
     <div className='min-h-screen w-screen grid grid-rows-[64px_1fr]'>
       <div className='[grid-area:1/1/2/-1] bg-blue-300 px-3 flex justify-between items-center gap-2 '>
         <div 
-          className='bg-blue-500 px-3 rounded-sm text-3xl'
+          className='bg-blue-500 px-3 py-1 text-white rounded-sm text-3xl'
         >
-          Score: 0
+          Score: {game.score}
         </div>
 
         {banner()}
