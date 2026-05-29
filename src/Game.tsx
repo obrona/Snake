@@ -82,9 +82,6 @@ function cellToRender(r: number, c: number, game: Snake) {
   }
 }
 
-
-
-
 export function Game() {
   const { setState } = useContext(StateContext);
  
@@ -179,22 +176,35 @@ export function Game() {
 
         {banner()}
         
-        <button 
-          className='px-2 py-1 rounded-sm bg-white text-red-500 ml-auto hover:scale-105 cursor-pointer'
-          onClick={() => {
-            reset();
-            setStarted(false);
-          }}
-        >
-          Restart
-        </button>
-        
-        <button 
-          className='px-2 py-1 rounded-sm bg-gray-300 hover:scale-105 cursor-pointer'
-          onClick={() => setState(states[0])}
-        >
-          Back
-        </button>
+        <div className='space-x-2'>
+          {started &&
+            <>
+              <button 
+                className='w-8 h-8 rounded-sm bg-white hover:scale-105 cursor-pointer'
+                onClick={() => (game.paused) ? game.unpause() : game.pause()}
+              >
+              {game.paused ? '▶︎' : '⏸︎'}
+              </button>
+
+              <button 
+                className='px-2 py-1 rounded-sm bg-white text-red-500 hover:scale-105 cursor-pointer'
+                onClick={() => {
+                  reset();
+                  setStarted(false);
+                }}
+              >
+                ↻
+              </button>
+            </>
+          }
+
+          <button 
+            className='px-2 py-1 rounded-sm bg-gray-300 hover:scale-105 cursor-pointer'
+            onClick={() => setState(states[0])}
+          >
+            Back
+          </button>
+        </div>
       </div>
 
       <div className='[grid-area:2/1/-1/-1] flex flex-col justify-center items-center'>

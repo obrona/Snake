@@ -16,6 +16,7 @@ export class Snake {
     score = 0;
     gameOver: boolean = false;
 
+    paused = false;
     timeoutId: number = -1;
     updateFunc: () => void; // the react setState toggle 
 
@@ -27,6 +28,17 @@ export class Snake {
     }
 
     startGame() {
+        this.moveSnakeBy1();
+    }
+
+    pause() {
+        this.paused = true;
+        clearTimeout(this.timeoutId);
+        this.updateFunc();
+    }
+
+    unpause() {
+        this.paused = false;
         this.moveSnakeBy1();
     }
 
