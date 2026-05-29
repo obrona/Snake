@@ -98,11 +98,11 @@ export function Game() {
   function banner() {
     if (gameRef.current.gameOver && !gameRef.current.isWin()) {
       return (
-        <div className='text-red-500'>Game Over</div>
+        <div className='text-red-500 text-2xl'>Game Over</div>
       )
     } else if (gameRef.current.gameOver && gameRef.current.isWin()) {
       return (
-        <div className='text-green-500'>You win</div>
+        <div className='text-green-500 text-2xl'>You win</div>
       )
     } else {
       return null;
@@ -199,7 +199,7 @@ export function Game() {
           }
 
           <button 
-            className='px-2 py-1 rounded-sm bg-gray-300 hover:scale-105 cursor-pointer'
+            className='px-2 py-1 rounded-sm bg-white hover:scale-105 cursor-pointer'
             onClick={() => setState(states[0])}
           >
             Back

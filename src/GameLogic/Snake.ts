@@ -32,12 +32,14 @@ export class Snake {
     }
 
     pause() {
+        if (this.gameOver) return;
         this.paused = true;
         clearTimeout(this.timeoutId);
         this.updateFunc();
     }
 
     unpause() {
+        if (this.gameOver) return;
         this.paused = false;
         this.moveSnakeBy1();
     }
@@ -52,6 +54,14 @@ export class Snake {
 
     isSnakeCell(r: number, c: number): boolean {
         return this.snakePos.some(([a, b]) => a === r && b === c);
+    }
+
+    modRow(r: number) {
+        return (r + this.R) % this.R;
+    }
+
+    modCol(c: number) {
+        return (c + this.C) % this.C;
     }
 
     spawnApple() {
@@ -93,12 +103,15 @@ export class Snake {
         this.currDir = [dx, dy];
     }
 
-    // no looping so if hit the boundary game over.
+    // want to loop i.e go from col C - 1 to 0
     // this is the main game loop.
     moveSnakeBy1() {
         const head = this.snakePos[0];
-        const [nx, ny] = [head[0] + this.currDir[0], head[1] + this.currDir[1]];
-        if (!this.isValid(nx, ny) || this.isSnakeCell(nx, ny)) {
+        const [nx, ny] = [
+            this.modRow(head[0] + this.currDir[0]), 
+            this.modCol(head[1] + this.currDir[1]),
+        ];
+        if (this.isSnakeCell(nx, ny)) {
             this.gameOver = true;
             this.updateFunc();
             return;
@@ -122,6 +135,6 @@ export class Snake {
         }
 
         this.updateFunc();
-        this.timeoutId = setTimeout(() => this.moveSnakeBy1(), 500); 
+        this.timeoutId = setTimeout(() => this.moveSnakeBy1(), Math.max(500 - 50 * this.score, 200)); 
     }
 }
