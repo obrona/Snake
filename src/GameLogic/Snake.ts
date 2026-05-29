@@ -99,7 +99,13 @@ export class Snake {
         return false;
     }
 
+    // if change dir to snakePos[1] we just ignore it
     changeDir(dx: number, dy: number) {
+        const pos0 = this.snakePos[0];
+        const pos1 = this.snakePos[1];
+        const [xx, yy] = [pos1[0] - pos0[0], pos1[1] - pos0[1]];
+        if (xx === dx && yy === dy) return;
+        
         this.currDir = [dx, dy];
     }
 
