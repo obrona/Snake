@@ -28,10 +28,17 @@ function GrassCell({ r, c, hasApple }: GrassProps) {
   )
 }
 
-interface SnakeProps {
-  isHead?: boolean
-  rotation?: number;
-  hasApple: boolean;
+const edgeShadowMap: Record<number, string> = {
+  0: "inset 0 2px 0 red",   // top
+  1: "inset -2px 0 0 red",  // right
+  2: "inset 0 -2px 0 red",  // bottom
+  3: "inset 2px 0 0 red",   // left
+};
+
+function getBoxShadow(edges: number[]) {
+  return edges
+    .map((edge) => edgeShadowMap[edge])
+    .join(", ");
 }
 
 function getAngle(dx: number, dy: number): number {
@@ -46,14 +53,26 @@ function getAngle(dx: number, dy: number): number {
   }
 }
 
-function SnakeCell({ isHead, rotation, hasApple }: SnakeProps) {
+interface SnakeProps {
+  isHead?: boolean
+  rotation?: number;
+  hasApple: boolean;
+  blocksToMark: number[];
+}
+
+function SnakeCell({ isHead, rotation, hasApple, blocksToMark }: SnakeProps) {
   return (
-    <div className='bg-blue-500 text-red-500 justify-center items-center text-3xl relative'>
+    <div 
+      className='bg-blue-500 text-red-500 justify-center items-center text-3xl relative'
+      style={{
+        boxShadow: getBoxShadow(blocksToMark),
+      }}
+    >
       {isHead &&
         <div 
           className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2'
           style={{
-            transform: `rotate(${rotation!}deg)`
+            transform: `rotate(${rotation!}deg)`,
           }}
         >
           →
@@ -68,13 +87,16 @@ function SnakeCell({ isHead, rotation, hasApple }: SnakeProps) {
 
 function cellToRender(r: number, c: number, game: Snake) {
   if (game.isSnakeCell(r, c)) {
-    const isHead = (r === game.snakePos[0][0] && c === game.snakePos[0][1]) ? true : undefined;
+    const snakePos = game.getSnakePos(r, c)!;
+    const isHead = (r === game.snakePos[0].pos[0] && c === game.snakePos[0].pos[1]) ? true : undefined;
     const rotation = (isHead) ? getAngle(game.currDir[0], game.currDir[1]) : undefined
+    
     return (
       <SnakeCell 
         isHead={isHead}
         rotation={rotation}
         hasApple={r === game.applePos[0] && c === game.applePos[1]} 
+        blocksToMark={snakePos.blocksToMark}
       />
     )
   } else {

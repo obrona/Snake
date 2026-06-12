@@ -4,13 +4,28 @@ export enum Value {
     A = 2,
 }
 
+export interface SnakePos {
+    pos: [number, number];
+    
+    // 0 is top, 1 is right, 2 is bottom, 3 is left.
+    // this is where we draw the snake outline
+    blocksToMark: number[]; 
+}
+
+function initSnakePos(r: number, c: number, blocksToMark: number[]): SnakePos {
+    return {
+        pos: [r, c],
+        blocksToMark,
+    }
+}
+
 export class Snake {
     static dirs: [number, number][] = [[-1, 0], [0, 1], [1, 0], [0, -1]];
 
     R: number = 15;
     C: number = 15;
     
-    snakePos: [number, number][]; // snakePos[0] is the head
+    snakePos: SnakePos[]; // snakePos[0] is the head
     currDir = Snake.dirs[3];
     applePos: [number, number];
     score = 0;
@@ -21,7 +36,11 @@ export class Snake {
     updateFunc: () => void; // the react setState toggle 
 
     constructor(updateFunc: () => void = () => {}) {
-        this.snakePos = [[7, 6], [7, 7], [7, 8]];
+        this.snakePos = [
+            initSnakePos(7, 6, [0, 2, 3]),
+            initSnakePos(7, 7, [0, 2]),
+            initSnakePos(7, 8, [0, 1, 2]),
+        ];
         this.applePos = [6, 6];
 
         this.updateFunc = updateFunc;
@@ -53,7 +72,7 @@ export class Snake {
     }
 
     isSnakeCell(r: number, c: number): boolean {
-        return this.snakePos.some(([a, b]) => a === r && b === c);
+        return this.snakePos.some(snakePos => snakePos.pos[0] === r && snakePos.pos[1] === c);
     }
 
     modRow(r: number) {
@@ -62,6 +81,56 @@ export class Snake {
 
     modCol(c: number) {
         return (c + this.C) % this.C;
+    }
+
+    getSnakePos(r: number, c: number) {
+        return this.snakePos.find(snakePos => snakePos.pos[0] === r && snakePos.pos[1] === c);
+    }
+
+    // others is the next block and the prev block.
+    getBlocksToMark(myPos: SnakePos, ...others: SnakePos[]) {
+        const vectors = others.map(snakePos => [snakePos.pos[0] - myPos.pos[0], snakePos.pos[1] - myPos.pos[1]]);
+        const blockToMarks = []
+        for (let i = 0; i < Snake.dirs.length; i++) {
+            const d = Snake.dirs[i];
+            if (vectors.some(v => v[0] === d[0] && v[1] == d[1])) continue;
+            blockToMarks.push(i);
+        }
+        return blockToMarks;
+    }
+
+    // for push front, push back we need to calculate the new blocks to mark.
+    pushBackSnakePos(r: number, c: number) {
+        const newSnakePos = initSnakePos(r, c, []);
+        this.snakePos.at(-1)!.blocksToMark = this.getBlocksToMark(
+            this.snakePos.at(-1)!,
+            this.snakePos.at(-2)!, 
+            newSnakePos,
+        );
+
+        newSnakePos.blocksToMark = this.getBlocksToMark(newSnakePos, this.snakePos.at(-1)!);
+        this.snakePos.push(newSnakePos);
+    }
+
+    pushFrontSnakePos(r: number, c: number) {
+        const newSnakePos = initSnakePos(r, c, []);
+        this.snakePos[0].blocksToMark = this.getBlocksToMark(
+            this.snakePos[0],
+            newSnakePos,
+            this.snakePos[1],
+        );
+
+        newSnakePos.blocksToMark = this.getBlocksToMark(newSnakePos, this.snakePos[0]);
+        this.snakePos.unshift(newSnakePos);
+    }
+
+    popBackSnakePos() {
+        this.snakePos.at(-2)!.blocksToMark = this.getBlocksToMark(
+            this.snakePos.at(-2)!,
+            this.snakePos.at(-3)!
+        );
+
+        this.snakePos.pop();
     }
 
     spawnApple() {
@@ -80,18 +149,18 @@ export class Snake {
         // try to extend relative to the snake tail direction (can't explain clearly)
         const lastPos = this.snakePos.at(-1)!;
         const secondLast = this.snakePos.at(-2)!;
-        const d = [lastPos[0] - secondLast[0], lastPos[1] - secondLast[1]];
+        const d = [lastPos.pos[0] - secondLast.pos[0], lastPos.pos[1] - secondLast.pos[1]];
 
-        const p1: [number, number] = [lastPos[0] + d[0], lastPos[1] + d[1]];
+        const p1: [number, number] = [lastPos.pos[0] + d[0], lastPos.pos[1] + d[1]];
         if (this.isValid(p1[0], p1[1]) && !this.isSnakeCell(p1[0], p1[1])) {
-            this.snakePos.push(p1);
+            this.pushBackSnakePos(p1[0], p1[1]);
             return true;
         }
 
         for (const [dx, dy] of Snake.dirs) {
-            const nx = lastPos[0] + dx, ny = lastPos[1] + dy;
+            const nx = lastPos.pos[0] + dx, ny = lastPos.pos[1] + dy;
             if (this.isValid(nx, ny) && !this.isSnakeCell(nx, ny)) {
-                this.snakePos.push([nx, ny]);
+                this.pushBackSnakePos(nx, ny);
                 return true;
             }
         }
@@ -103,7 +172,7 @@ export class Snake {
     changeDir(dx: number, dy: number) {
         const pos0 = this.snakePos[0];
         const pos1 = this.snakePos[1];
-        const [xx, yy] = [pos1[0] - pos0[0], pos1[1] - pos0[1]];
+        const [xx, yy] = [pos1.pos[0] - pos0.pos[0], pos1.pos[1] - pos0.pos[1]];
         if (xx === dx && yy === dy) return;
         
         this.currDir = [dx, dy];
@@ -114,8 +183,8 @@ export class Snake {
     moveSnakeBy1() {
         const head = this.snakePos[0];
         const [nx, ny] = [
-            this.modRow(head[0] + this.currDir[0]), 
-            this.modCol(head[1] + this.currDir[1]),
+            this.modRow(head.pos[0] + this.currDir[0]), 
+            this.modCol(head.pos[1] + this.currDir[1]),
         ];
         if (this.isSnakeCell(nx, ny)) {
             this.gameOver = true;
@@ -123,8 +192,8 @@ export class Snake {
             return;
         }
 
-        this.snakePos.pop();
-        this.snakePos.unshift([nx, ny]);
+        this.popBackSnakePos();
+        this.pushFrontSnakePos(nx, ny);
 
         if (nx === this.applePos[0] && ny === this.applePos[1]) {
             this.score++;
